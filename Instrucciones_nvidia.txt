@@ -1,0 +1,21 @@
+
+En el archivo run_experiment utilizar la linea:
+    from knn_fs_wrapper_pytorch import KnnFitness
+
+Comentar la linea:
+    # from knn_fs_wrapper_sklearn import KnnFitness
+
+
+Crear entorno conda:
+    conda create --name doa_pytorch python=3.10
+
+Activar entorno:
+    conda activate doa_pytorch
+
+Instalar librerias:
+    pip install -r requirements.txt
+
+
+Instalar pytorch para soporte CUDA:
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
