@@ -2,20 +2,21 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import os # Importar os
+import os 
 
-def generate_excel_report(history_data, filename="reporte_experimento_doa.xlsx"):
+def generate_csv_report(history_data, filename="reporte_experimento_doa.csv"):
     """
-    Recibe el historial de datos de una corrida y lo guarda en la ruta 'filename'.
+    Recibe el historial de datos de una corrida y lo guarda en la ruta 'filename' (CSV).
     """
-    print(f"\nGenerando reporte en Excel: {filename}")
+    print(f"\nGenerando reporte en CSV: {filename}")
     df_reporte = pd.DataFrame(history_data)
-    df_reporte.to_excel(filename, index=False)
+    df_reporte.to_csv(filename, index=False)
     print(f"Reporte '{filename}' guardado.")
 
 def generate_plots(df_reporte, final_results, filename="analisis_doa_wdbc.png"):
     """
     Genera el dashboard de 4 gráficos y lo guarda en la ruta 'filename'.
+    (Esta función no requiere cambios)
     """
     print(f"Generando gráficos de análisis: {filename}")
     
@@ -45,8 +46,12 @@ def generate_plots(df_reporte, final_results, filename="analisis_doa_wdbc.png"):
     # --- Gráfico 3: Rendimiento (Error y Características) ---
     ax1 = plt.subplot(2, 2, 3)
     ax1.set_xlabel('Iteración')
-    ax1.set_ylabel('Error kNN (Interno)', color='blue')
-    ax1.plot(df_reporte['iteracion'], df_reporte['error_knn'], color='blue', label='Error kNN')
+    # (Ajuste menor para Madelon, si el log usa 'penalizacion_tamano')
+    y_label_error = 'Error kNN (Interno)'
+    y_data_error = df_reporte.get('error_knn', pd.Series(dtype='float'))
+    
+    ax1.set_ylabel(y_label_error, color='blue')
+    ax1.plot(df_reporte['iteracion'], y_data_error, color='blue', label='Error kNN')
     ax1.tick_params(axis='y', labelcolor='blue')
 
     ax2 = ax1.twinx() # Eje Y secundario
@@ -64,20 +69,19 @@ def generate_plots(df_reporte, final_results, filename="analisis_doa_wdbc.png"):
     plt.ylabel("Precisión en Datos de Test")
     plt.title("4. Rendimiento Final (Validación)")
     plt.ylim(0, 1.05)
-    # Añadir etiquetas de valor
     for barra in barras:
         yval = barra.get_height()
         plt.text(barra.get_x() + barra.get_width()/2.0, yval + 0.01, f'{yval:.4f}', ha='center', va='bottom')
 
-    plt.tight_layout() # Ajusta los gráficos
-    plt.savefig(filename) # Guarda en la ruta especificada
+    plt.tight_layout() 
+    plt.savefig(filename) 
     print(f"Gráficos '{filename}' guardados.")
-    plt.close() # Cierra la figura para liberar memoria
+    plt.close() 
 
-def run_statistical_analysis(results_list, excel_filename, plot_filename):
+def run_statistical_analysis(results_list, csv_filename, plot_filename):
     """
     Toma una lista de resultados (de múltiples corridas) y genera
-    un reporte estadístico en Excel y un boxplot en las rutas especificadas.
+    un reporte estadístico en CSV y un boxplot en las rutas especificadas.
     """
     print("\n--- Análisis Estadístico (Múltiples Corridas) ---")
     
@@ -89,29 +93,44 @@ def run_statistical_analysis(results_list, excel_filename, plot_filename):
     print("Estadísticas Descriptivas (Resumen de Corridas):")
     print(stats_desc[['mean', 'std', 'min', 'max']])
     
-    # 3. Guardar en Excel
-    with pd.ExcelWriter(excel_filename) as writer:
-        df_stats.to_excel(writer, sheet_name='Resultados_Raw', index_label='Corrida')
-        stats_desc.to_excel(writer, sheet_name='Estadisticas_Descriptivas')
-    print(f"Reporte estadístico '{excel_filename}' guardado.")
+    # 3. Guardar en CSV (MODIFICADO)
+    
+    # a. Guardar los resultados crudos (raw) de las 30 corridas
+    df_stats.to_csv(csv_filename, index_label='Corrida')
+    print(f"Reporte estadístico (Raw) '{csv_filename}' guardado.")
+    
+    # b. Guardar las estadísticas descriptivas (mean, std, etc.)
+    desc_filename = csv_filename.replace('.csv', '_descriptivas.csv')
+    stats_desc.to_csv(desc_filename)
+    print(f"Reporte estadístico (Descriptivo) '{desc_filename}' guardado.")
     
     # 4. Generar Boxplots (Gráficos de Cajas)
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(18, 6)) # Ancho aumentado
 
     # Boxplot para Precisión
-    plt.subplot(1, 2, 1)
-    df_plot = pd.DataFrame({
-        'kNN-Full': df_stats['precision_full'],
-        'kNN-DOA': df_stats['precision_doa']
+    plt.subplot(1, 3, 1)
+    df_plot_acc = pd.DataFrame({
+        'kNN-Full (Acc)': df_stats['precision_full'],
+        'kNN-DOA (Acc)': df_stats['precision_doa']
     })
-    df_plot.boxplot(grid=True)
-    plt.title('Distribución de Precisión')
+    df_plot_acc.boxplot(grid=True)
+    plt.title('Distribución de Precisión (Acc)')
     plt.ylabel('Precisión en Test')
     
+    # Boxplot para F1-Score (NUEVO)
+    plt.subplot(1, 3, 2)
+    df_plot_f1 = pd.DataFrame({
+        'kNN-Full (F1)': df_stats['f1_full'],
+        'kNN-DOA (F1)': df_stats['f1_doa']
+    })
+    df_plot_f1.boxplot(grid=True)
+    plt.title('Distribución de F1-Score')
+    plt.ylabel('F1-Score en Test')
+
     # Boxplot para Número de Características
-    plt.subplot(1, 2, 2)
+    plt.subplot(1, 3, 3)
     df_stats[['num_features_doa']].boxplot(grid=True)
-    plt.title('Distribución de N° Características')
+    plt.title('Distribución de N° Características (DOA)')
     plt.ylabel('N° Características Seleccionadas')
     
     plt.tight_layout()

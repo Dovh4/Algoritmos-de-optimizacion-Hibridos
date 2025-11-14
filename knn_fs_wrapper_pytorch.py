@@ -54,7 +54,7 @@ class KnnFitness:
         
         # Partición Hold-Out (en CPU, como arrays de Numpy)
         self.X_train_fit, self.X_val_fit, self.y_train_fit, self.y_val_fit = train_test_split(
-            X_train, y_train, test_size=0.3, random_state=42
+            X_train, y_train, test_size=0.2, random_state=42
         )
 
     def _binarizar(self, solucion_continua):
