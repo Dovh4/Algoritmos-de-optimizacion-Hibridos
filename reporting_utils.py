@@ -13,7 +13,7 @@ def generate_csv_report(history_data, filename="reporte_experimento_doa.csv"):
     df_reporte.to_csv(filename, index=False)
     print(f"Reporte '{filename}' guardado.")
 
-def generate_plots(df_reporte, final_results, filename="analisis_doa_wdbc.png"):
+def generate_plots(df_reporte, final_results, filename, algoritmo):
     """
     Genera el dashboard de 4 gráficos y lo guarda en la ruta 'filename'.
     (Esta función no requiere cambios)
@@ -63,7 +63,7 @@ def generate_plots(df_reporte, final_results, filename="analisis_doa_wdbc.png"):
 
     # --- Gráfico 4: Rendimiento Final (Barra) ---
     plt.subplot(2, 2, 4)
-    nombres = ['kNN (Todas las Características)', f'kNN-DOA ({num_features} Caract.)']
+    nombres = ['kNN (Todas las Características)', f'kNN-{algoritmo} ({num_features} Caract.)']
     precisiones = [acc_full, acc_subset]
     barras = plt.bar(nombres, precisiones, color=['gray', 'blue'])
     plt.ylabel("Precisión en Datos de Test")
@@ -78,7 +78,7 @@ def generate_plots(df_reporte, final_results, filename="analisis_doa_wdbc.png"):
     print(f"Gráficos '{filename}' guardados.")
     plt.close() 
 
-def run_statistical_analysis(results_list, csv_filename, plot_filename):
+def run_statistical_analysis(results_list, csv_filename, plot_filename, algoritmo):
     """
     Toma una lista de resultados (de múltiples corridas) y genera
     un reporte estadístico en CSV y un boxplot en las rutas especificadas.
@@ -111,7 +111,7 @@ def run_statistical_analysis(results_list, csv_filename, plot_filename):
     plt.subplot(1, 3, 1)
     df_plot_acc = pd.DataFrame({
         'kNN-Full (Acc)': df_stats['precision_full'],
-        'kNN-DOA (Acc)': df_stats['precision_doa']
+        f'kNN-{algoritmo} (Acc)': df_stats[f'precision_{algoritmo}']
     })
     df_plot_acc.boxplot(grid=True)
     plt.title('Distribución de Precisión (Acc)')
@@ -121,7 +121,7 @@ def run_statistical_analysis(results_list, csv_filename, plot_filename):
     plt.subplot(1, 3, 2)
     df_plot_f1 = pd.DataFrame({
         'kNN-Full (F1)': df_stats['f1_full'],
-        'kNN-DOA (F1)': df_stats['f1_doa']
+        f'kNN-{algoritmo} (F1)': df_stats[f'f1_{algoritmo}']
     })
     df_plot_f1.boxplot(grid=True)
     plt.title('Distribución de F1-Score')
@@ -129,8 +129,8 @@ def run_statistical_analysis(results_list, csv_filename, plot_filename):
 
     # Boxplot para Número de Características
     plt.subplot(1, 3, 3)
-    df_stats[['num_features_doa']].boxplot(grid=True)
-    plt.title('Distribución de N° Características (DOA)')
+    df_stats[[f'num_features_{algoritmo}']].boxplot(grid=True)
+    plt.title(f'Distribución de N° Características ({algoritmo})')
     plt.ylabel('N° Características Seleccionadas')
     
     plt.tight_layout()
